@@ -126,7 +126,7 @@ int main(){
     ****ANNEALING*****
     *****************/
 
-    int T = 100000;
+    int T = 1000000;
     int alpha = 0.99;
 
     long currentCost = current->cost();
@@ -137,13 +137,16 @@ int main(){
         GraphPartition* next = current->successor();
         long nextCost = next->cost();
         long deltaCost = nextCost - currentCost;
-        if (deltaCost <= 0){
+        if (deltaCost < 0){
             currentCost = nextCost;
             current = next;
+            cout << currentCost <<  endl;
         }
-        else if (rand() < exp(-deltaCost/temp)){
+        else if ((static_cast <float> (rand()) / static_cast <float> (RAND_MAX)) > 
+                  (temp/T)) {
             currentCost = nextCost;
             current = next;
+            cout << currentCost << "**" << endl;
         }
         else{
             current->undoSuccessor();    
@@ -151,12 +154,6 @@ int main(){
     }
 
     cout << "END COST: " << currentCost << endl;
-    for (int i = 0; i < N/2; i++){
-        cout << current->nodes[i]->id << endl;
-        for (pair<Node*, int> e : current->nodes[i]->edges)
-            if (!e.first->isLeft) cout << e.first->id << "->" << current->nodes[i]->id << " ";
-        cout << endl;
-    }
 
     return 0;    
 }

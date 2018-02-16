@@ -6,12 +6,14 @@
 #include <ctime>
 #include <iostream>
 using namespace std;
+class Node;
+
 
 class Node {
     public:
     int id;
     bool isLeft;
-    set< pair<Node*, int> > edges;
+    set< pair<Node*, int> > edges; //TODO: Implement custom ordering
     Node(int i) {id = i;}
     void addEdge(Node*, int);
 };
@@ -25,16 +27,29 @@ void Node::addEdge(Node* to, int cost){
     to->edges.insert(make_pair(this, cost));
 }
 
+//TODO: implement this into the edge ordering in order to 
+//short circuit cost calculations
+struct betterOrdering{
+  bool operator() (const pair<Node*, int>& lhs, const pair<Node*, int>& rhs) const{
+      if (lhs.first->isLeft) return true;
+      if (rhs.first->isLeft) return false;
+      return true;
+    }      
+};
+
+
 
 class GraphPartition{
     public:
     vector<Node*> nodes;
+    pair<int, int> lastSwapped;
     unsigned int N;
     GraphPartition(vector<Node*> n, int size){
         nodes = n;
         N = size;
     }
     GraphPartition* successor();
+    void undoSuccessor();
     int cost();
 };
 
@@ -45,17 +60,21 @@ class GraphPartition{
 *  random values on the front and back half of the list
 */
 GraphPartition* GraphPartition::successor(){
-    //deepcopy new path
-    vector<Node*> newPath = nodes;
     //get random indecies on the front and back of the list
-    size_t half = N / 2;
-    size_t v1 = rand() % half;
-    size_t v2 = rand() % half + half;
-    newPath[v1]->isLeft = false;
-    newPath[v2]->isLeft = true;
-    //swap values
-    iter_swap(newPath.begin() + v1, newPath.begin() + v2);
-    return new GraphPartition(newPath, N);
+    int half = N / 2;
+    int v1 = rand() % half;
+    int v2 = rand() % half + half;
+    nodes[v1]->isLeft = false;
+    nodes[v2]->isLeft = true;
+    iter_swap(nodes.begin() + v1, nodes.begin() + v2);
+    lastSwapped = make_pair(v1,v2);
+    return this;
+}
+
+void GraphPartition::undoSuccessor(){
+    nodes[lastSwapped.first]->isLeft = false;
+    nodes[lastSwapped.second]->isLeft = true;
+    iter_swap(nodes.begin() + lastSwapped.first, nodes.begin() + lastSwapped.second); 
 }
 
 int GraphPartition::cost(){
@@ -63,8 +82,8 @@ int GraphPartition::cost(){
     //check left partition
     for (int i = 0; i < N/2; i++){
         for (pair<Node*, int> e : nodes[i]->edges){
-            if (!e.first->isLeft) 
-                total += e.second;
+            if (e.first->isLeft) {} //TODO: Implement optimization once sorted properly
+            else    total += e.second;
         }    
     }
 
@@ -118,19 +137,26 @@ int main(){
         GraphPartition* next = current->successor();
         long nextCost = next->cost();
         long deltaCost = nextCost - currentCost;
-        if (deltaCost < 0){
+        if (deltaCost <= 0){
             currentCost = nextCost;
             current = next;
         }
-        else if (rand() < 1/temp/*exp(-deltaCost/temp)*/){
+        else if (rand() < exp(-deltaCost/temp)){
             currentCost = nextCost;
             current = next;
+        }
+        else{
+            current->undoSuccessor();    
         }
     }
 
     cout << "END COST: " << currentCost << endl;
-    for (Node* n : current->nodes)
-        cout << n->id << " ";
+    for (int i = 0; i < N/2; i++){
+        cout << current->nodes[i]->id << endl;
+        for (pair<Node*, int> e : current->nodes[i]->edges)
+            if (!e.first->isLeft) cout << e.first->id << "->" << current->nodes[i]->id << " ";
+        cout << endl;
+    }
 
     return 0;    
 }

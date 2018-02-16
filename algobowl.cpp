@@ -9,11 +9,10 @@ using namespace std;
 
 class Node {
     public:
-    int index;
-    //TODO create comparison operator to sort by first value in descending order
-    //so that we can short-circuit edge detection.
-    set< pair<Node*, int> > edges; 
-    Node(int i) {index = i;}
+    int id;
+    bool isLeft;
+    set< pair<Node*, int> > edges;
+    Node(int i) {id = i;}
     void addEdge(Node*, int);
 };
 
@@ -52,6 +51,8 @@ GraphPartition* GraphPartition::successor(){
     size_t half = N / 2;
     size_t v1 = rand() % half;
     size_t v2 = rand() % half + half;
+    newPath[v1]->isLeft = false;
+    newPath[v2]->isLeft = true;
     //swap values
     iter_swap(newPath.begin() + v1, newPath.begin() + v2);
     return new GraphPartition(newPath, N);
@@ -62,10 +63,8 @@ int GraphPartition::cost(){
     //check left partition
     for (int i = 0; i < N/2; i++){
         for (pair<Node*, int> e : nodes[i]->edges){
-            //since edges are order descending, break when we reach
-            //the left partition
-            if (e.first->index <= N/2){} //TODO
-            else {total += e.second;}
+            if (!e.first->isLeft) 
+                total += e.second;
         }    
     }
 
@@ -89,6 +88,7 @@ int main(){
     vector<Node*> nodes;
     for (int i = 1; i <= N; i++){
         Node* newNode = new Node(i);
+        newNode->isLeft = (i <= N/2);
         nodes.push_back(newNode);
     }
 
@@ -101,14 +101,7 @@ int main(){
     
     //store first object in order given /*OPTIMIZABLE?*/
     GraphPartition* current = new GraphPartition(nodes, N); 
-
-    for (int i = 0; i < N/2; i++){
-        for (pair<Node*, int> e : nodes[i]->edges){
-            if (e.first->index > N/2) cout << "*";
-            cout << e.first->index << "->" << nodes[i]->index << "  ";
-        }
-    }
-
+    
     /*****************
     ****SIMULATED*****
     ****ANNEALING*****
@@ -133,9 +126,11 @@ int main(){
             currentCost = nextCost;
             current = next;
         }
-    } 
+    }
+
     cout << "END COST: " << currentCost << endl;
     for (Node* n : current->nodes)
-        cout << n->index << " ";
+        cout << n->id << " ";
+
     return 0;    
 }

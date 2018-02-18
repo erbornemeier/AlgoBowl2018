@@ -3,7 +3,8 @@ import random
 n = input("How many vertecies > ")
 m = input("How many edges > ")
 
-print str(n) + " " + str(m)
+file = open("inputs.txt","w")
+file.write(str(n) + " " + str(m) + "\n")
 
 for i in range(m):
     fromNode = random.choice(range(1,n+1))
@@ -11,4 +12,4 @@ for i in range(m):
     while toNode == fromNode:
         toNode = random.choice(range(1,n+1))
     cost = random.randint(1,50)
-    print str(fromNode) + " " + str(toNode) + " " + str(cost)
+    file.write(str(fromNode) + " " + str(toNode) + " " + str(cost) + "\n")

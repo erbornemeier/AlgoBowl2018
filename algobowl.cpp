@@ -4,18 +4,19 @@
 #include <vector>
 #include <cstdlib>
 #include <ctime>
+#include <fstream>
 #include <iostream>
+#include <string>
 using namespace std;
-class Node;
-
 
 class Node {
     public:
-    int id;
-    bool isLeft;
-    set< pair<Node*, int> > edges; //TODO: Implement custom ordering
-    Node(int i) {id = i;}
-    void addEdge(Node*, int);
+        int id;
+        bool isLeft;
+        set< pair<Node*, int> > edges; //TODO: Implement custom ordering
+
+        Node(int i) {id = i;}
+        void addEdge(Node*, int);
 };
 
 /*
@@ -26,18 +27,6 @@ void Node::addEdge(Node* to, int cost){
     edges.insert(make_pair(to, cost));
     to->edges.insert(make_pair(this, cost));
 }
-
-//TODO: implement this into the edge ordering in order to 
-//short circuit cost calculations
-struct betterOrdering{
-  bool operator() (const pair<Node*, int>& lhs, const pair<Node*, int>& rhs) const{
-      if (lhs.first->isLeft) return true;
-      if (rhs.first->isLeft) return false;
-      return true;
-    }      
-};
-
-
 
 class GraphPartition{
     public:
@@ -86,22 +75,37 @@ int GraphPartition::cost(){
             else    total += e.second;
         }    
     }
-
     return total;    
 }
 
 
-int main(){
+int main(int argc, char** argv){
 
     /*****************
     *******SETUP******
     *****************/
 
+
+    ifstream fin;
+    if (argc != 2){
+        cerr << "Wrong format" << endl << "Exectute by: " << argv[0] 
+             << " yourInput.txt" << endl;    
+        return -1;
+    }
+    else {
+        fin.open(argv[1]);
+       if (fin.fail()){
+            cerr << "File could not be opened"  << endl; 
+        }
+    }
+
+
+
     srand(time(NULL));
 
     //get number of nodes and edges
     int N, E;
-    cin >> N >> E;
+    fin >> N >> E;
 
     //create initial set of nodes
     vector<Node*> nodes;
@@ -114,7 +118,7 @@ int main(){
     //read in and create edges
     for (int i = 0; i < E; i++){
         int from, to, cost;
-        cin >> from >> to >> cost;
+        fin >> from >> to >> cost;
         nodes[from-1]->addEdge(nodes[to-1], cost);
     }
     
@@ -129,6 +133,8 @@ int main(){
     double T = 1000000;
     double t = T;
     double alpha = 0.9999;
+
+    clock_t start = clock();
 
     long currentCost = current->cost();
     cout << "START COST: " << currentCost << endl;
@@ -159,6 +165,6 @@ int main(){
     }
 
     cout << "END COST: " << currentCost << endl;
-
+    cout << (clock() - start)/(float)(CLOCKS_PER_SEC) << endl;
     return 0;    
 }

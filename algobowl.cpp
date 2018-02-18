@@ -126,14 +126,14 @@ int main(){
     ****ANNEALING*****
     *****************/
 
-    int T = 1000000;
-    int alpha = 0.99;
+    double T = 1000000;
+    double t = T;
+    double alpha = 0.9999;
 
     long currentCost = current->cost();
     cout << "START COST: " << currentCost << endl;
-
-    for (int i = 1; i <= T; i++){
-        float temp = i;
+    float min = pow(10,-6);
+    while (t > min){       
         GraphPartition* next = current->successor();
         long nextCost = next->cost();
         long deltaCost = nextCost - currentCost;
@@ -142,15 +142,20 @@ int main(){
             current = next;
             cout << currentCost <<  endl;
         }
-        else if ((static_cast <float> (rand()) / static_cast <float> (RAND_MAX)) > 
-                  (temp/T)) {
+        else if ((static_cast <float> (rand()) / static_cast <float> (RAND_MAX)) <
+                  (exp(-pow(deltaCost,2)/t))) {
             currentCost = nextCost;
             current = next;
             cout << currentCost << "**" << endl;
         }
         else{
             current->undoSuccessor();    
+	    //cout << "No move" << endl;
         }
+	t *= alpha;
+	//cout << "temp: " << t << endl;
+        //cout << "Delta: " << exp(-deltaCost/t) << endl;
+	//cout << "Some other random: " << (static_cast <float> (rand()) / static_cast <float> (RAND_MAX)) << endl;
     }
 
     cout << "END COST: " << currentCost << endl;

@@ -103,6 +103,8 @@ int main(int argc, char** argv){
 
 
     ifstream fin;
+    ofstream fout;
+
     if (argc != 2){
         cerr << "Wrong format" << endl << "Exectute by: " << argv[0] 
              << " yourInput.txt" << endl;    

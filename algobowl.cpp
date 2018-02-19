@@ -13,8 +13,7 @@ class Node {
     public:
         int id;
         bool isLeft;
-        set< pair<Node*, int> > edges; //TODO: Implement custom ordering
-
+        set< pair<Node*, int> > edges; 
         Node(int i) {id = i;}
         void addEdge(Node*, int);
 };
@@ -37,7 +36,7 @@ class GraphPartition{
         nodes = n;
         N = size;
     }
-    GraphPartition* successor();
+    int successor(int);
     void undoSuccessor();
     int cost();
 };
@@ -48,7 +47,7 @@ class GraphPartition{
 * Returns the next "successor" of the current permutation by swapping two
 *  random values on the front and back half of the list
 */
-GraphPartition* GraphPartition::successor(){
+int GraphPartition::successor(int currentCost){
     //get random indecies on the front and back of the list
     int half = N / 2;
     int v1 = rand() % half;
@@ -57,7 +56,24 @@ GraphPartition* GraphPartition::successor(){
     nodes[v2]->isLeft = true;
     iter_swap(nodes.begin() + v1, nodes.begin() + v2);
     lastSwapped = make_pair(v1,v2);
-    return this;
+    for (pair<Node*, int> edge: nodes[v2]->edges){
+        if (edge.first == nodes[v1])
+            continue;
+        else if (!edge.first->isLeft)
+            currentCost -= edge.second;
+        else
+            currentCost += edge.second;
+    }
+    for (pair<Node*, int> edge: nodes[v1]->edges){
+        if (edge.first == nodes[v2])
+            continue;
+        else if (edge.first->isLeft)
+            currentCost -= edge.second;
+        else
+            currentCost += edge.second;
+    }
+
+    return currentCost;
 }
 
 void GraphPartition::undoSuccessor(){
@@ -71,8 +87,8 @@ int GraphPartition::cost(){
     //check left partition
     for (int i = 0; i < N/2; i++){
         for (pair<Node*, int> e : nodes[i]->edges){
-            if (e.first->isLeft) {} //TODO: Implement optimization once sorted properly
-            else    total += e.second;
+            if (!e.first->isLeft) 
+                total += e.second;
         }    
     }
     return total;    
@@ -130,7 +146,7 @@ int main(int argc, char** argv){
     ****ANNEALING*****
     *****************/
 
-    double T = 1000000;
+    double T = 100000000;
     double t = T;
     double alpha = 0.9999;
 
@@ -138,25 +154,22 @@ int main(int argc, char** argv){
 
     long currentCost = current->cost();
     cout << "START COST: " << currentCost << endl;
-    float min = pow(10,-6);
+    float min = pow(10,-10);
     while (t > min){       
-        GraphPartition* next = current->successor();
-        long nextCost = next->cost();
+        long nextCost = current->successor(currentCost);
         long deltaCost = nextCost - currentCost;
-        if (deltaCost < 0){
+        if (deltaCost <= 0){
             currentCost = nextCost;
-            current = next;
             cout << currentCost <<  endl;
         }
         else if ((static_cast <float> (rand()) / static_cast <float> (RAND_MAX)) <
                   (exp(-pow(deltaCost,2)/t))) {
             currentCost = nextCost;
-            current = next;
             cout << currentCost << "**" << endl;
         }
         else{
             current->undoSuccessor();    
-	    //cout << "No move" << endl;
+	    cout << "No move" << endl;
         }
 	t *= alpha;
 	//cout << "temp: " << t << endl;
@@ -165,6 +178,7 @@ int main(int argc, char** argv){
     }
 
     cout << "END COST: " << currentCost << endl;
+    cout << "CHECK COST: " << current->cost() << endl;
     cout << (clock() - start)/(float)(CLOCKS_PER_SEC) << endl;
     return 0;    
 }

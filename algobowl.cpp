@@ -7,7 +7,14 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <climits>
 using namespace std;
+
+
+bool is_file_empty(ifstream& pFile)
+{
+        return pFile.peek() == ifstream::traits_type::eof();
+}
 
 class Node {
     public:
@@ -101,23 +108,32 @@ int main(int argc, char** argv){
     *******SETUP******
     *****************/
 
-
     ifstream fin;
+    ifstream fin_past_solution;
     ofstream fout;
+    long past_cost;
 
-    if (argc != 2){
+    if (argc != 3){
         cerr << "Wrong format" << endl << "Exectute by: " << argv[0] 
-             << " yourInput.txt" << endl;    
+             << " yourInput.txt yourOutput.txt" << endl;    
         return -1;
     }
     else {
-        fin.open(argv[1]);
+       fin.open(argv[1]);
        if (fin.fail()){
-            cerr << "File could not be opened"  << endl; 
+            cerr << "Input File could not be opened"  << endl; 
+        }
+
+        fin_past_solution.open(argv[2], ios_base::app);
+        if (fin_past_solution.fail() || is_file_empty(fin_past_solution)){
+            past_cost = LONG_MAX;        
+        }
+        else {
+            fin_past_solution >> past_cost;
         }
     }
 
-
+    cout << "PAST COST FOR " << argv[2] << ": " << past_cost << endl;
 
     srand(time(NULL));
 
@@ -152,26 +168,26 @@ int main(int argc, char** argv){
     double t = T;
     double alpha = 0.9999;
 
-    clock_t start = clock();
+    //clock_t start = clock();
 
     long currentCost = current->cost();
-    cout << "START COST: " << currentCost << endl;
+    //cout << "START COST: " << currentCost << endl;
     float min = pow(10,-10);
     while (t > min){       
         long nextCost = current->successor(currentCost);
         long deltaCost = nextCost - currentCost;
         if (deltaCost <= 0){
             currentCost = nextCost;
-            cout << currentCost <<  endl;
+            //cout << currentCost <<  endl;
         }
         else if ((static_cast <float> (rand()) / static_cast <float> (RAND_MAX)) <
                   (exp(-pow(deltaCost,2)/t))) {
             currentCost = nextCost;
-            cout << currentCost << "**" << endl;
+            //cout << currentCost << "**" << endl;
         }
         else{
             current->undoSuccessor();    
-	    cout << "No move" << endl;
+	    //cout << "No move" << endl;
         }
 	t *= alpha;
 	//cout << "temp: " << t << endl;
@@ -181,6 +197,26 @@ int main(int argc, char** argv){
 
     cout << "END COST: " << currentCost << endl;
     cout << "CHECK COST: " << current->cost() << endl;
-    cout << (clock() - start)/(float)(CLOCKS_PER_SEC) << endl;
+    //cout << (clock() - start)/(float)(CLOCKS_PER_SEC) << endl;
+    
+    if (currentCost < past_cost){
+        fout.open(argv[2]);
+        fout << currentCost << endl;
+        for (int i = 0; i < N; i++){
+            fout << current->nodes[i]->id;
+            if (i == (N/2) - 1) fout << endl;
+            else if (i == N-1){}
+            else fout << " ";
+        }
+        cout << "UPDATED COST TO: " << currentCost << endl;
+    }
+    else {
+        cout << "COST NOT UPDATED" << endl;    
+    }
+
+    fin.close();
+    fout.close();
+    fin_past_solution.close();
+    
     return 0;    
 }

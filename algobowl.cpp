@@ -122,6 +122,7 @@ int main(int argc, char** argv){
        fin.open(argv[1]);
        if (fin.fail()){
             cerr << "Input File could not be opened"  << endl; 
+            return -1;
         }
 
         fin_past_solution.open(argv[2], ios_base::app);

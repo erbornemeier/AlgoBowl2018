@@ -10,7 +10,7 @@ class Node {
     public:
         int id;
         bool isLeft;
-        set< pair<Node*, int> > edges; 
+        vector< pair<Node*, int> > edges; 
         Node(int i) {id = i;}
         void addEdge(Node*, int);
 };
@@ -20,8 +20,8 @@ class Node {
 * Adds an edge bidirectionally to both nodes
 */
 void Node::addEdge(Node* to, int cost){
-    edges.insert(make_pair(to, cost));
-    to->edges.insert(make_pair(this, cost));
+    edges.push_back(make_pair(to, cost));
+    to->edges.push_back(make_pair(this, cost));
 }
 
 class GraphPartition{

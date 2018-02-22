@@ -20,7 +20,7 @@ class Node {
     public:
         int id;
         bool isLeft;
-        set< pair<Node*, int> > edges; 
+        vector< pair<Node*, int> > edges; 
         Node(int i) {id = i;}
         void addEdge(Node*, int);
 };
@@ -30,8 +30,8 @@ class Node {
 * Adds an edge bidirectionally to both nodes
 */
 void Node::addEdge(Node* to, int cost){
-    edges.insert(make_pair(to, cost));
-    to->edges.insert(make_pair(this, cost));
+    edges.push_back(make_pair(to, cost));
+    to->edges.push_back(make_pair(this, cost));
 }
 
 class GraphPartition{
@@ -154,6 +154,13 @@ int main(int argc, char** argv){
     for (int i = 0; i < E; i++){
         int from, to, cost;
         fin >> from >> to >> cost;
+        if (from == to){
+            cout << "Duplicate edge found on edge: " << i << endl;
+            return -1;
+        }
+        else if (from < 1 || from > N || to < 1 || to > N){
+            cout << "Invalid node found " << from << " " << endl;    
+        }
         nodes[from-1]->addEdge(nodes[to-1], cost);
     }
     
